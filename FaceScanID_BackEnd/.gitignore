@@ -1,0 +1,17 @@
+# Ignorar arquivos de ambiente virtual
+env/
+venv/
+.venv/
+
+# Arquivos de configuração sensíveis
+.env
+src/config.py
+
+# Dependências (caso não queira versionar)
+requirements.txt
+
+# Logs e arquivos temporários
+logs/
+__pycache__/
+*.pyc
+*.pyo
