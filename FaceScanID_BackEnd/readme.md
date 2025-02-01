@@ -1,5 +1,12 @@
-Estrutura do Projeto:
+# FaceScanID - Reconhecimento Facial
 
+Este projeto implementa um sistema de **reconhecimento facial** utilizando **DeepFace, OpenCV e Flask**. Ele permite capturar imagens, armazenar registros faciais e realizar comparações em tempo real.
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
 FaceScanID/
 │── env/                  # Ambiente virtual (NÃO alterar arquivos aqui)
 │── data/                 # Armazena imagens e informações de pessoas
@@ -9,135 +16,155 @@ FaceScanID/
 │── database/             # Banco de dados para armazenar informações
 │── src/                  # Código-fonte principal do projeto
 │   ├── capture.py        # Captura de imagem e reconhecimento facial
-|   │── config.py         # Configurações gerais do projeto
+│   ├── config.py         # Configurações gerais do projeto
 │   ├── train.py          # Treina o modelo de reconhecimento facial
 │   ├── recognize.py      # Executa o reconhecimento facial em tempo real
 │   ├── database.py       # Gerencia o banco de dados de usuários
 │── api/                  # API para fornecer dados via requisições HTTP
 │   ├── app.py            # Backend Flask para buscar informações
 │── requirements.txt      # Dependências do projeto
-│── README.md             # Documentação do projetos
-|── .env                  # Variáveis do Projeto.
+│── README.md             # Documentação do projeto
+│── .env                  # Variáveis do Projeto
+```
 
-__________________________________________________________________________________________
+---
 
-INSTALANDO AS DEPENDÊNCIAS:
-__________________________________________________________________________________________
+## 🛠️ Configuração do Ambiente
 
-📌 Acesse a pasta do projeto (onde o repositório foi clonado):
-Ex: cd caminho/para/o/repo
-   
+### 📌 **1. Clonar o Repositório**
+```sh
+# Clonar o repositório
+git clone https://github.com/seu-usuario/FaceScanID.git
+cd FaceScanID
+```
 
-___________________________________________________________________________________________
+### 📌 **2. Criar e Ativar Ambiente Virtual**
+```sh
+# Criar ambiente virtual
+python -m venv env
+```
 
-📌 Ative o ambiente virtual (se estiver usando um):
-Windows (PowerShell):
+**No Windows (PowerShell):**
+```sh
 .\env\Scripts\Activate
+```
 
-___________________________________________________________________________________________
-📌Instalação de Bibliotecas:
+**No Linux/macOS:**
+```sh
+source env/bin/activate
+```
 
-pip install python-dotenv
+---
 
-pip install mysql-connector-python
+## 📦 Instalação de Dependências
 
-pip install deepface
-
-pip install flask-cors
-
-pip install opencv-python
-
-
-EM CASO DE ERROS COM AS BIBLIOTECAS:
-
-✅ Passo 1: Verificar qual Python o VS Code está usando
-Abra o terminal no VS Code e execute:
-
-powershell
-python -c "import sys; print(sys.executable)"
-
-Isso mostrará o caminho do interpretador Python que o VS Code está usando. Se não for o Python do ambiente virtual (env), precisamos corrigir isso.
-
-✅ Passo 2: Ativar o ambiente virtual corretamente
-Ative o ambiente virtual manualmente:
-
-No PowerShell:
-
-powershell
-env\Scripts\Activate
-
-
-No CMD:
-cmd
-env\Scripts\activate.bat
-
-Agora, execute o Python novamente para ver se ele reconhece os pacotes:
-
-powershell
-python -c "import mysql.connector"
-
-Se não der erro, o ambiente virtual está ativado corretamente.
-
-✅ Passo 3: Configurar o Python correto no VS Code
-
-Pressione Ctrl + Shift + P (ou F1) para abrir a Command Palette
-
-Digite: Python: Select Interpreter
-
-Escolha o Python dentro do seu ambiente virtual, que será algo como:
-
-local:\ ... \FaceScanID_BackEnd\env\Scripts\python.exe
-Reinicie o VS Code (Ctrl + Shift + P → Reload Window)
-
-✅ Passo 4: Testar se o problema foi resolvido
-Agora, abra o terminal dentro do VS Code e execute:
-
-powershell
-python -c "import mysql.connector"
-Se não houver erro, agora o VS Code está usando o ambiente correto! 🚀
-
-Se ainda houver erro, tente forçar a reinstalação do pacote dentro do ambiente virtual:
-
-powershell
-pip install --upgrade --force-reinstall mysql-connector-python Flask-Cors
-___________________________________________________________________________________________
-📌 Instale todas as dependências com pip:
+### 📌 **1. Instalar todas as dependências do projeto**
+```sh
 pip install -r requirements.txt
+```
 
-e
+### 📌 **2. Caso tenha problemas com dependências específicas:**
+```sh
+pip install python-dotenv mysql-connector-python deepface flask-cors opencv-python
+```
 
-pip freeze > requirements.txt 
-(Para adicionar os pacotes automaticamente no requiremens.txt ao instalar outras bibliotecas.)
-
-____________________________________________________________________________________________
-📌 Caso tenha problemas com o OpenCV e TensorFlow (erro de permissão ou incompatibilidade):
-Se necessário, reinstale manualmente:
-
+**Se houver erro com OpenCV ou TensorFlow:**
+```sh
 pip install --upgrade --force-reinstall opencv-python-headless
-
 pip install numpy==1.21.2
+```
 
-_____________________________________________________________________________________________
-📌Pasta "data/faces/" - Contem todas as fotos para reconhecimento facial.
+---
 
-Ao adicionar as fotos, dgite o comando abaixo para treinar a IA:
+## 📊 **Banco de Dados**
 
+Certifique-se de configurar o **MySQL** e criar o banco antes de iniciar.
+
+### 📌 **1. Criar banco de dados**
+```sql
+CREATE DATABASE FSID;
+```
+
+### 📌 **2. Criar a tabela 'pessoas'**
+```sql
+CREATE TABLE pessoas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome_completo VARCHAR(255),
+    doc_identidade VARCHAR(50),
+    titulo_eleitor VARCHAR(50),
+    certidao_militar VARCHAR(50),
+    telefone VARCHAR(20),
+    endereco TEXT
+);
+```
+
+---
+
+## 🚀 **Executando o Projeto**
+
+### 📌 **1. Treinar a IA com novas imagens**
+Após adicionar imagens na pasta `data/faces/`, execute:
+```sh
 python src/train.py
+```
 
-______________________________________________________________________________________________
-📌 O comando abaixo irá iniciar o servidor:
-
+### 📌 **2. Iniciar o servidor Flask**
+```sh
 python api/app.py
-
-Para buscar diretamente um nome, digite na URL do navegador:
-
+```
+Agora, o backend estará rodando em:
+```
+http://127.0.0.1:5000/
+```
+Para buscar um usuário específico:
+```
 http://127.0.0.1:5000/buscar/nome_completo
+```
 
-
-______________________________________________________________________________________________
-📌Para Iniciar a Câmera e o Reconhecimento Facial, digite o comando abaixo:
-
+### 📌 **3. Iniciar o reconhecimento facial em tempo real**
+```sh
 python src/recognize.py
+```
+Após abrir a interface, clique em **"Iniciar Câmera"**.
+Para encerrar, pressione **'q'** no teclado e clique em "Fechar".
 
-Ao iniciar, clique em "Inicar Câmera".
-Para fechar/encerrar a câmera, tecle a leta "q" em seu teclado, e clique em fechar no menu aberto.
+---
+
+## 📝 **Dicas para Resolução de Erros**
+
+### ✅ **1. Verifique se o VS Code está usando o Python correto**
+```sh
+python -c "import sys; print(sys.executable)"
+```
+Se não for o do ambiente virtual, selecione manualmente no VS Code:
+- Pressione **Ctrl + Shift + P** e digite: **Python: Select Interpreter**
+- Escolha o interpretador dentro da pasta **env**.
+
+### ✅ **2. Erro 'ModuleNotFoundError' para mysql.connector**
+```sh
+pip install --upgrade --force-reinstall mysql-connector-python Flask-Cors
+```
+
+### ✅ **3. Erro de TensorFlow no Windows**
+```sh
+pip install --upgrade --force-reinstall tensorflow
+```
+
+---
+
+## 🤝 **Contribuições**
+
+Sinta-se à vontade para contribuir com melhorias neste projeto! Para isso:
+1. **Fork** este repositório
+2. Crie uma **branch**: `git checkout -b minha-nova-feature`
+3. Faça um **commit**: `git commit -m 'Adicionando nova funcionalidade'`
+4. Envie para o repositório: `git push origin minha-nova-feature`
+5. Crie um **Pull Request** 🚀
+
+---
+
+## 🏆 **Autor**
+👤 **Seu Nome**  
+📧 [seu-email@email.com](mailto:seu-email@email.com)
+🔗 [LinkedIn](https://www.linkedin.com/in/seu-usuario/)
+
