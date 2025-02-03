@@ -3,12 +3,15 @@ env/
 venv/
 .venv/
 
+# Arquivo Executável .exe
+dist/
+
+
 # Arquivos de configuração sensíveis
 .env
 src/config.py
-
-# Dependências (caso não queira versionar)
-requirements.txt
+src/__pycache__/
+data/faces/
 
 # Logs e arquivos temporários
 logs/
