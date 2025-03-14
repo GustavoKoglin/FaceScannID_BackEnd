@@ -98,11 +98,29 @@ CREATE TABLE pessoas (
     doc_identidade VARCHAR(50),
     titulo_eleitor VARCHAR(50),
     certidao_militar VARCHAR(50),
+    possui_registro_classe BOOLEAN,
+    numero_registro_classe VARCHAR(50),
+    pis_pasep VARCHAR(50),
+    tipo_sanguineo VARCHAR(10),
     telefone VARCHAR(20),
-    endereco TEXT
+    endereco TEXT,
+    emails TEXT,
+    possui_imoveis BOOLEAN,
+    tipo_imovel VARCHAR(50),
+    registro_imovel VARCHAR(50),
+    endereco_imovel TEXT,
+    possui_veiculos BOOLEAN,
+    tipo_veiculo VARCHAR(50),
+    marca_veiculo VARCHAR(50),
+    registro_veiculo VARCHAR(50),
+    possui_parente BOOLEAN,
+    nome_parente VARCHAR(255),
+    doc_parente VARCHAR(50),
+    telefone_parente VARCHAR(20),
+    endereco_parente TEXT
 );
 
--- Outros dados serão inseridos no decorrer do projeto.
+-- Outros dados serão criados no decorrer do desenvolvimento do projeto.
 ```
 
 ---
