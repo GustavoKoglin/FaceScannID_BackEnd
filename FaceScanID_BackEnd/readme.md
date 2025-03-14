@@ -165,6 +165,6 @@ Sinta-se à vontade para contribuir com melhorias neste projeto! Para isso:
 
 ## 🏆 **Autor**
 👤 **Seu Nome**  
-📧 [seu-email@email.com](mailto:seu-email@email.com)
-🔗 [LinkedIn](https://www.linkedin.com/in/seu-usuario/)
+📧 [engcomputacao.gustavokoglin@gmail.com](mailto:engcomputacao.gustavokoglin@gmail.com)
+🔗 [LinkedIn](https://www.linkedin.com/in/gustavokoglin/)
 
