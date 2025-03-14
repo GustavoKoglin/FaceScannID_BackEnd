@@ -96,6 +96,8 @@ CREATE TABLE pessoas (
     telefone VARCHAR(20),
     endereco TEXT
 );
+
+-- Outros dados serão inseridos no decorrer do projeto.
 ```
 
 ---
