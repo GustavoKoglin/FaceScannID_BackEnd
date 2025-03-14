@@ -9,22 +9,27 @@ Este projeto implementa um sistema de **reconhecimento facial** utilizando **Dee
 ```
 FaceScanID/
 │── env/                  # Ambiente virtual (NÃO alterar arquivos aqui)
+│── api/                  # API para fornecer dados via requisições HTTP
+│── buid/                 # Build (Construção do projeto compilado)
 │── data/                 # Armazena imagens e informações de pessoas
 │   ├── faces/            # Fotos de pessoas conhecidas
-│   ├── embeddings/       # Arquivos com dados de reconhecimento
+│   ├── embeddings/       # Arquivos com dados de reconhecimento e o gererate_embeddings.py que converte a imagem para rgb.
 │── models/               # Modelos treinados para reconhecimento facial
-│── database/             # Banco de dados para armazenar informações
+│── database/             # Banco de dados para armazenar informações.
+│   ├── add_person.py     # Adiciona uma nova pessoa no banco de dados com todas as suas informações.
+│   ├── database.py       # Gerencia a conexão e criação da tabela 'pessoas' com as novas colunas.
 │── src/                  # Código-fonte principal do projeto
 │   ├── capture.py        # Captura de imagem e reconhecimento facial
 │   ├── config.py         # Configurações gerais do projeto
 │   ├── train.py          # Treina o modelo de reconhecimento facial
 │   ├── recognize.py      # Executa o reconhecimento facial em tempo real
 │   ├── database.py       # Gerencia o banco de dados de usuários
-│── api/                  # API para fornecer dados via requisições HTTP
 │   ├── app.py            # Backend Flask para buscar informações
-│── requirements.txt      # Dependências do projeto
+│── .gitignore            # Adiciona dependências que não devem ser inseridas na subida do código no repositório
+│── app.spec              # Arquivo de configuração gerado pelo PyInstaller. Descreve como o aplicativo será empacotado em um executável, ex: .exe.
+│── config.py             # Variáveis do Projeto
 │── README.md             # Documentação do projeto
-│── .env                  # Variáveis do Projeto
+│── requirements.txt      # Dependências do projeto
 ```
 
 ---
