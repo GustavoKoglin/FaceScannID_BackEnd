@@ -1,43 +1,65 @@
 """
-Arquivo: config.py
-Descrição:
-    - Define constantes e variáveis utilizadas em todo o projeto.
-    - Em um ambiente de produção, considere o uso de variáveis de ambiente
-      para armazenar credenciais e caminhos sensíveis.
+ARQUIVO: CONFIG.PY
+DESCRIÇÃO:
+    - DEFINE CONSTANTES E CONFIGURAÇÕES GLOBAIS DO PROJETO
+    - UTILIZA VARIÁVEIS DE AMBIENTE PARA DADOS SENSÍVEIS
+    - CONFIGURAÇÕES PARA BANCO DE DADOS, DEEPFACE E CAMINHOS
 """
 
-# Carrega as variáveis do arquivo .env
 import os
 from dotenv import load_dotenv
+import mysql.connector
+from mysql.connector import Error
 
-# Agora podemos acessar com os.getenv
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "***********")
-DB_NAME = os.getenv("DB_NAME", "FSID")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
+# CARREGA VARIÁVEIS DE AMBIENTE
+load_dotenv()
 
-# Caminhos principais
-# Diretório onde estão as imagens de rostos a serem reconhecidos
-FACE_DATA_PATH = "data/faces"
+# CONFIGURAÇÕES DO BANCO DE DADOS
+DB_CONFIG = {
+  "host": os.getenv("DB_HOST", "localhost"),  # Note: chaves em minúsculo
+  "user": os.getenv("DB_USER", "root"),
+  "password": os.getenv("DB_PASSWORD", "Gbk@2027"),  # Verifique esta senha
+  "database": os.getenv("DB_NAME", "FSID_DEV"),
+  "port": int(os.getenv("DB_PORT", 3306)),
+  "auth_plugin": 'mysql_native_password'  # Padronizado para minúsculo
+}
 
-# Diretório onde salvaremos as representações (embeddings) do DeepFace
-EMBEDDINGS_DIR = "data/embeddings"
+# CAMINHOS DO PROJETO
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 
-# Arquivo global de embeddings do DeepFace
-GLOBAL_EMBEDDINGS_FILE = "data/embeddings/generate_encodings.pkl"
+PATHS = {
+    'FACE_DATA': os.path.join(DATA_DIR, 'faces'),
+    'EMBEDDINGS': os.path.join(DATA_DIR, 'embeddings'),
+    'GLOBAL_EMBEDDINGS': os.path.join(DATA_DIR, 'embeddings', 'encodings.pkl'),
+    'MODELS': os.path.join(BASE_DIR, 'models')
+}
 
-# Diretório para salvar modelos ou dados extras (se necessário)
-MODELS_PATH = "models"
+# CONFIGURAÇÕES DO DEEPFACE
+DEEPFACE_CONFIG = {
+  'MODEL_NAME': "VGG-Face",
+  'DETECTOR_BACKEND': "opencv",
+  'DISTANCE_METRIC': "cosine",
+  'ENFORCE_DETECTION': True,
+  'ALIGN': True
+}
 
-# Nome (ou tipo) do modelo padrão do DeepFace que será usado
-DEEPFACE_MODEL = "VGG-Face"
-# Exemplos: "Facenet", "Facenet512", "ArcFace", "SFace", etc.
+def testar_conexao():
+    """Testa a conexão com o banco de dados"""
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        print("✅ Conexão bem-sucedida com o banco de dados")
+        conn.close()
+        return True
+    except Error as e:
+        print(f"❌ Falha na conexão: {e}")
+        print(f"Configuração usada: {DB_CONFIG}")
+        return False
 
-"""
-Observação:
-    - Caso você queira mudar para outro modelo do DeepFace, basta alterar DEEPFACE_MODEL.
-    - Se quiser armazenar as representações com outro nome de arquivo, mude GLOBAL_EMBEDDINGS_FILE.
-    - Para um ambiente real, remova a senha do banco (DB_PASSWORD) e armazene em variáveis de ambiente,
-      usando, por exemplo, os módulos 'os' e 'dotenv'.
-"""
+# CRIAÇÃO DE DIRETÓRIOS SE NÃO EXISTIREM
+for PATH in PATHS.values():
+    if not os.path.exists(PATH):
+        os.makedirs(PATH)
+        print(f"DIRETÓRIO CRIADO: {PATH}")
+
+    testar_conexao()
