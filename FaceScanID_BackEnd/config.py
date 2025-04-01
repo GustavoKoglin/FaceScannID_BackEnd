@@ -1,65 +1,74 @@
 """
-ARQUIVO: CONFIG.PY
-DESCRIÇÃO:
-    - DEFINE CONSTANTES E CONFIGURAÇÕES GLOBAIS DO PROJETO
-    - UTILIZA VARIÁVEIS DE AMBIENTE PARA DADOS SENSÍVEIS
-    - CONFIGURAÇÕES PARA BANCO DE DADOS, DEEPFACE E CAMINHOS
+CONFIG.PY - Global Project Configuration
+- Defines constants and global configurations
+- Uses environment variables for sensitive data
+- Configures database, DeepFace, and paths
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import Error
 
-# CARREGA VARIÁVEIS DE AMBIENTE
+# Load environment variables
 load_dotenv()
 
-# CONFIGURAÇÕES DO BANCO DE DADOS
+# Project root directory (more reliable way to get it)
+PROJECT_ROOT = Path(__file__).parent
+
+# Database Configuration
 DB_CONFIG = {
-  "host": os.getenv("DB_HOST", "localhost"),  # Note: chaves em minúsculo
-  "user": os.getenv("DB_USER", "root"),
-  "password": os.getenv("DB_PASSWORD", "Gbk@2027"),  # Verifique esta senha
-  "database": os.getenv("DB_NAME", "FSID_DEV"),
-  "port": int(os.getenv("DB_PORT", 3306)),
-  "auth_plugin": 'mysql_native_password'  # Padronizado para minúsculo
+    "host": os.getenv("DB_HOST", "localhost"),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", "Gbk@2027"),
+    "database": os.getenv("DB_NAME", "FSID"),
+    "port": int(os.getenv("DB_PORT", 3306)),
+    "auth_plugin": 'mysql_native_password'
 }
 
-# CAMINHOS DO PROJETO
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-
-PATHS = {
-    'FACE_DATA': os.path.join(DATA_DIR, 'faces'),
-    'EMBEDDINGS': os.path.join(DATA_DIR, 'embeddings'),
-    'GLOBAL_EMBEDDINGS': os.path.join(DATA_DIR, 'embeddings', 'encodings.pkl'),
-    'MODELS': os.path.join(BASE_DIR, 'models')
+# Directory Structure
+DIRECTORIES = {
+    'data': PROJECT_ROOT / 'data',
+    'faces': PROJECT_ROOT / 'data' / 'faces',
+    'embeddings': PROJECT_ROOT / 'data' / 'embeddings',
+    'models': PROJECT_ROOT / 'models',
+    'temp': PROJECT_ROOT / 'temp'
 }
 
-# CONFIGURAÇÕES DO DEEPFACE
+# File Paths
+FILES = {
+    'encodings': DIRECTORIES['embeddings'] / 'deepface_encodings.pkl',
+    'representations': DIRECTORIES['embeddings'] / 'deepface_representations.pkl'
+}
+
+# DeepFace Configuration
 DEEPFACE_CONFIG = {
-  'MODEL_NAME': "VGG-Face",
-  'DETECTOR_BACKEND': "opencv",
-  'DISTANCE_METRIC': "cosine",
-  'ENFORCE_DETECTION': True,
-  'ALIGN': True
+    'model_name': "VGG-Face",
+    'detector_backend': "opencv",
+    'distance_metric': "cosine",
+    'enforce_detection': True,
+    'align': True
 }
 
-def testar_conexao():
-    """Testa a conexão com o banco de dados"""
+def initialize_directories():
+    """Create required directories if they don't exist"""
+    for dir_path in DIRECTORIES.values():
+        dir_path.mkdir(parents=True, exist_ok=True)
+        print(f"Directory ensured: {dir_path}")
+
+def test_database_connection():
+    """Test database connection with error handling"""
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
-        print("✅ Conexão bem-sucedida com o banco de dados")
+        print("✅ Database connection successful")
         conn.close()
         return True
     except Error as e:
-        print(f"❌ Falha na conexão: {e}")
-        print(f"Configuração usada: {DB_CONFIG}")
+        print(f"❌ Database connection failed: {e}")
+        print(f"Configuration used: {DB_CONFIG}")
         return False
 
-# CRIAÇÃO DE DIRETÓRIOS SE NÃO EXISTIREM
-for PATH in PATHS.values():
-    if not os.path.exists(PATH):
-        os.makedirs(PATH)
-        print(f"DIRETÓRIO CRIADO: {PATH}")
-
-    testar_conexao()
+# Initialize the project environment
+initialize_directories()
+test_database_connection()

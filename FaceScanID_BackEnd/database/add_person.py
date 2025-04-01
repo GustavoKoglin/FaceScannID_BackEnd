@@ -1,3 +1,4 @@
+
 import mysql.connector
 from mysql.connector import Error
 import os
@@ -10,8 +11,8 @@ load_dotenv()
 # Configuração melhorada do banco de dados
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "fsid_user"),  # Recomendado usar usuário específico
-    "password": os.getenv("DB_PASSWORD", ""),  # Nunca armazenar senha no código
+    "user": os.getenv("DB_USER", "root"),  # Recomendado usar usuário específico
+    "password": os.getenv("DB_PASSWORD", "Gbk@2027"),  # Nunca armazenar senha no código
     "database": os.getenv("DB_NAME", "FSID"),
     "port": int(os.getenv("DB_PORT", 3306)),
     "auth_plugin": 'mysql_native_password',

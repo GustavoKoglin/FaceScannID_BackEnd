@@ -2,18 +2,18 @@ import mysql.connector
 from mysql.connector import Error
 import os
 from dotenv import load_dotenv
+from config import db_config, host, user, password, name, port
 
 class DatabaseManager:
     def __init__(self):
         load_dotenv()  # Carrega variáveis do .env
-        self.config = {
-            "host": os.getenv("DB_HOST", "localhost"),
-            "user": os.getenv("DB_USER", "root"),
-            "password": os.getenv("DB_PASSWORD", ""),
-            "database": os.getenv("DB_NAME", "FSID"),
-            "port": int(os.getenv("DB_PORT", 3306)),
-            "auth_plugin": 'mysql_native_password',  # Adicionado para MySQL 8+
-            "raise_on_warnings": True  # Melhora o tratamento de avisos
+        DB_CONFIG = {
+            "host": host,
+            "user": user,
+            "password": password,
+            "database": name,
+            "port": port,
+            **db_config  # Desempacota os outros parâmetros de configuração
         }
         self.test_connection()  # Testa a conexão ao inicializar
 

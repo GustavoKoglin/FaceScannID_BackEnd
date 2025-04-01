@@ -1,169 +1,282 @@
+"""
+RECOGNIZE.PY - Versão Melhorada
+- Reconhecimento facial em tempo real com OpenCV e DeepFace
+- Interface aprimorada com Tkinter
+- Controles de câmera e zoom
+"""
+
 import cv2
 import os
 import tkinter as tk
-from tkinter import Button, Label
+from tkinter import ttk, messagebox
+from pathlib import Path
+import sys
 from deepface import DeepFace
-from config import IMAGE_DIR
+import numpy as np
 
-# Variáveis globais
-zoom_factor = 1.0
-frame = None
-cap = None
-camera_on = False
-root = None
-btn_iniciar = None
-panel_camera = None
+# Configuração de importação segura
+try:
+    from config import DIRECTORIES, FILES, DEEPFACE_CONFIG
+except ImportError:
+    PROJECT_ROOT = Path(__file__).parent.parent
+    sys.path.append(str(PROJECT_ROOT))
+    from config import DIRECTORIES, FILES, DEEPFACE_CONFIG
 
-def aplicar_zoom(frame, zoom_factor):
-    """Aplica zoom na imagem."""
-    height, width = frame.shape[:2]
-    new_height, new_width = int(height * zoom_factor), int(width * zoom_factor)
-    resized_frame = cv2.resize(frame, (new_width, new_height))
-
-    if zoom_factor > 1.0:
-        x1 = (new_width - width) // 2
-        y1 = (new_height - height) // 2
-        resized_frame = resized_frame[y1:y1 + height, x1:x1 + width]
-
-    return resized_frame
-
-def reconhecer_faces_camera():
-    """Inicia ou encerra a câmera e faz reconhecimento facial."""
-    global cap, frame, camera_on, btn_iniciar
-
-    if camera_on:
-        encerrar_camera()
-        return
-
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("❌ Erro ao acessar a webcam.")
-        return
-
-    camera_on = True
-    btn_iniciar.config(text="Encerrar Câmera")
-
-    print("🎥 Iniciando reconhecimento facial. Pressione 'q' para encerrar.")
-
-    exibir_camera_tkinter()
-
-def exibir_camera_tkinter():
-    """Exibe a câmera na própria interface Tkinter."""
-    global frame, camera_on
-
-    if not camera_on:
-        return
-
-    ret, frame = cap.read()
-    if not ret:
-        return
-
-    frame = aplicar_zoom(frame, zoom_factor)
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-    try:
-        temp_path = save_temp_frame(frame)
-
-        resultado = DeepFace.find(
-            img_path=temp_path,
-            db_path=IMAGE_DIR,
-            enforce_detection=False,
-            model_name="ArcFace",
-            detector_backend="mtcnn",
-            distance_metric="euclidean_l2",
+class FaceRecognitionApp:
+    def __init__(self, root):
+        self.root = root
+        self.zoom_factor = 1.0
+        self.frame = None
+        self.cap = None
+        self.camera_on = False
+        self.recognized_faces = []
+        
+        # Configurações da câmera
+        self.camera_index = 0  # Câmera padrão
+        self.camera_width = 1280
+        self.camera_height = 720
+        self.camera_fps = 30
+        
+        self.setup_ui()
+        self.bind_keys()
+        
+    def setup_ui(self):
+        """Configura a interface do usuário"""
+        self.root.title("Reconhecimento Facial")
+        self.root.geometry("800x600")
+        
+        # Frame principal
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Frame de controles
+        control_frame = ttk.Frame(main_frame)
+        control_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+        
+        # Botões
+        self.btn_start = ttk.Button(
+            control_frame, 
+            text="Iniciar Câmera", 
+            command=self.toggle_camera,
+            style="Accent.TButton"
         )
-
-        if resultado and not resultado[0].empty:
-            nome_arquivo = os.path.basename(resultado[0]["identity"][0])
-            nome = os.path.splitext(nome_arquivo)[0]
-            cor = (0, 255, 0)
+        self.btn_start.pack(pady=10, fill=tk.X)
+        
+        ttk.Button(
+            control_frame, 
+            text="Capturar Foto", 
+            command=self.save_photo
+        ).pack(pady=5, fill=tk.X)
+        
+        ttk.Button(
+            control_frame, 
+            text="Zoom +", 
+            command=lambda: self.adjust_zoom(0.1)
+        ).pack(pady=5, fill=tk.X)
+        
+        ttk.Button(
+            control_frame, 
+            text="Zoom -", 
+            command=lambda: self.adjust_zoom(-0.1)
+        ).pack(pady=5, fill=tk.X)
+        
+        ttk.Button(
+            control_frame, 
+            text="Sair", 
+            command=self.close_app,
+            style="Cancel.TButton"
+        ).pack(pady=20, fill=tk.X)
+        
+        # Status
+        self.status_var = tk.StringVar(value="Câmera: DESLIGADA")
+        ttk.Label(
+            control_frame, 
+            textvariable=self.status_var,
+            foreground="red"
+        ).pack(pady=10)
+        
+        # Estilo
+        self.setup_styles()
+    
+    def setup_styles(self):
+        """Configura estilos visuais"""
+        style = ttk.Style()
+        style.configure("Accent.TButton", foreground="black", background="#0078D7")
+        style.configure("Cancel.TButton", foreground="black", background="#D73A3A")
+        style.map("Accent.TButton",
+                 background=[("active", "#106EBE"), ("pressed", "#005A9E")])
+        style.map("Cancel.TButton",
+                 background=[("active", "#BE1010"), ("pressed", "#9E0000")])
+    
+    def bind_keys(self):
+        """Configura atalhos de teclado"""
+        self.root.bind('<q>', lambda e: self.toggle_camera())
+        self.root.bind('<Escape>', lambda e: self.close_app())
+        self.root.bind('<plus>', lambda e: self.adjust_zoom(0.1))
+        self.root.bind('<minus>', lambda e: self.adjust_zoom(-0.1))
+    
+    def toggle_camera(self):
+        """Inicia/para a câmera padrão"""
+        if self.camera_on:
+            self.stop_camera()
         else:
-            nome = "Desconhecido"
-            cor = (0, 0, 255)
+            self.start_camera()
+    
+    def start_camera(self):
+        """Inicia a câmera com configurações otimizadas"""
+        self.cap = cv2.VideoCapture(self.camera_index, cv2.CAP_DSHOW)
+        
+        # Configurações da câmera
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.camera_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.camera_height)
+        self.cap.set(cv2.CAP_PROP_FPS, self.camera_fps)
+        
+        if not self.cap.isOpened():
+            messagebox.showerror(
+                "Erro de Câmera",
+                "Não foi possível acessar a câmera.\nVerifique se está disponível."
+            )
+            return
+        
+        self.camera_on = True
+        self.btn_start.config(text="Parar Câmera")
+        self.status_var.set("Câmera: LIGADA")
+        self.update_camera()
+    
+    def stop_camera(self):
+        """Para a câmera e libera recursos"""
+        self.camera_on = False
+        if self.cap is not None:
+            self.cap.release()
+        cv2.destroyAllWindows()
+        self.btn_start.config(text="Iniciar Câmera")
+        self.status_var.set("Câmera: DESLIGADA")
+    
+    def update_camera(self):
+        """Atualiza o feed da câmera com reconhecimento facial"""
+        if not self.camera_on:
+            return
+        
+        ret, self.frame = self.cap.read()
+        if not ret:
+            print("Erro ao capturar frame")
+            self.stop_camera()
+            return
+        
+        # Aplica zoom
+        frame = self.apply_zoom(self.frame, self.zoom_factor)
+        
+        try:
+            # Converte para RGB (DeepFace trabalha com RGB)
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+            # Detecta rostos
+            self.recognized_faces = DeepFace.extract_faces(
+                img_path=rgb_frame,
+                detector_backend="mtcnn",
+                enforce_detection=False,
+                align=True
+            )
+            
+            # Processa cada rosto detectado
+            for face in self.recognized_faces:
+                if 'facial_area' in face and face['confidence'] > 0.85:
+                    self.process_face(frame, face)
+            
+        except Exception as e:
+            print(f"Erro durante reconhecimento: {str(e)}")
+        
+        # Exibe o frame
+        cv2.imshow("Reconhecimento Facial", frame)
+        
+        # Agenda próxima atualização
+        self.root.after(10, self.update_camera)
+    
+    def process_face(self, frame, face):
+        """Processa e desenha informações para cada rosto detectado"""
+        facial_area = face['facial_area']
+        x, y, w, h = facial_area['x'], facial_area['y'], facial_area['w'], facial_area['h']
+        
+        # Desenha retângulo ao redor do rosto
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        
+        # Tenta reconhecer a pessoa
+        try:
+            # Extrai a região do rosto
+            face_region = frame[y:y+h, x:x+w]
+            
+            # Faz o reconhecimento
+            results = DeepFace.find(
+                img_path=face_region,
+                db_path=str(DIRECTORIES['faces']),
+                enforce_detection=False,
+                silent=True
+            )
+            
+            # Mostra resultado
+            if results and not results[0].empty:
+                identity = os.path.splitext(os.path.basename(results[0]['identity'][0]))[0]
+                cv2.putText(
+                    frame, identity, (x, y-10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2
+                )
+            else:
+                cv2.putText(
+                    frame, "Desconhecido", (x, y-10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2
+                )
+                
+        except Exception as e:
+            print(f"Erro no reconhecimento: {str(e)}")
+            cv2.putText(
+                frame, "Erro", (x, y-10),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2
+            )
+    
+    def apply_zoom(self, frame, zoom_factor):
+        """Aplica zoom mantendo proporções"""
+        if zoom_factor == 1.0:
+            return frame
+            
+        height, width = frame.shape[:2]
+        center_x, center_y = width // 2, height // 2
+        
+        new_width = int(width / zoom_factor)
+        new_height = int(height / zoom_factor)
+        
+        x1 = max(0, center_x - new_width // 2)
+        y1 = max(0, center_y - new_height // 2)
+        x2 = min(width, center_x + new_width // 2)
+        y2 = min(height, center_y + new_height // 2)
+        
+        cropped = frame[y1:y2, x1:x2]
+        return cv2.resize(cropped, (width, height))
+    
+    def adjust_zoom(self, increment):
+        """Ajusta o zoom"""
+        self.zoom_factor = max(1.0, min(3.0, self.zoom_factor + increment))
+        print(f"Zoom ajustado: {self.zoom_factor:.1f}x")
+    
+    def save_photo(self):
+        """Salva o frame atual"""
+        if self.frame is not None:
+            photo_path = str(DIRECTORIES['faces'] / 'captura.jpg')
+            cv2.imwrite(photo_path, self.frame)
+            messagebox.showinfo(
+                "Foto Salva",
+                f"Foto capturada salva em:\n{photo_path}"
+            )
+    
+    def close_app(self):
+        """Fecha o aplicativo corretamente"""
+        self.stop_camera()
+        self.root.destroy()
 
-        rostos = DeepFace.extract_faces(img_path=temp_path, detector_backend="mtcnn", enforce_detection=False)
-        for rosto in rostos:
-            facial_area = rosto["facial_area"]
-            x, y, w, h = facial_area["x"], facial_area["y"], facial_area["w"], facial_area["h"]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), cor, 2)
-            cv2.putText(frame, nome, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, cor, 2)
+def main():
+    root = tk.Tk()
+    app = FaceRecognitionApp(root)
+    root.protocol("WM_DELETE_WINDOW", app.close_app)
+    root.mainloop()
 
-    except Exception as e:
-        print(f"⚠️ Erro na detecção facial: {e}")
-
-    cv2.imshow("Reconhecimento Facial", frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        encerrar_camera()
-
-    root.after(10, exibir_camera_tkinter)
-
-def encerrar_camera():
-    """Fecha a câmera e encerra a exibição."""
-    global cap, camera_on, btn_iniciar
-    camera_on = False
-    if cap is not None:
-        cap.release()
-    cv2.destroyAllWindows()
-    btn_iniciar.config(text="Iniciar Câmera")
-
-def fechar_aplicacao():
-    """Fecha a interface gráfica e encerra a câmera se necessário."""
-    encerrar_camera()
-    root.quit()
-
-def save_temp_frame(frame):
-    """Salva o frame atual como imagem temporária e retorna o caminho."""
-    temp_path = "temp_frame.jpg"
-    cv2.imwrite(temp_path, frame)
-    return temp_path
-
-def salvar_foto():
-    """Salva uma captura da câmera."""
-    global frame
-    if frame is not None:
-        caminho = os.path.join(IMAGE_DIR, "captura.jpg")
-        cv2.imwrite(caminho, frame)
-        print(f"📸 Foto salva em: {caminho}")
-
-def aumentar_zoom():
-    """Aumenta o zoom na imagem."""
-    global zoom_factor
-    zoom_factor += 0.1
-    print(f"🔍 Zoom aumentado para {zoom_factor:.1f}")
-
-def diminuir_zoom():
-    """Diminui o zoom na imagem."""
-    global zoom_factor
-    zoom_factor = max(1.0, zoom_factor - 0.1)
-    print(f"🔎 Zoom reduzido para {zoom_factor:.1f}")
-
-# Criando a interface gráfica com Tkinter
-root = tk.Tk()
-root.title("Reconhecimento Facial")
-root.geometry("1000x600")
-
-# Criando um frame para os botões na lateral esquerda
-frame_botoes = tk.Frame(root)
-frame_botoes.pack(side="left", padx=20, pady=20)
-
-# Criando botões estilizados
-def criar_botao(texto, comando):
-    botao = Button(frame_botoes, text=texto, command=comando, font=("Arial", 12),
-                   bg="#007BFF", fg="white", activebackground="#0056b3",
-                   activeforeground="white", bd=2, relief="raised", width=20, height=2, cursor="hand2")
-    botao.pack(pady=5)
-    return botao
-
-# Criando botões
-btn_iniciar = criar_botao("Iniciar Câmera", reconhecer_faces_camera)
-btn_capturar = criar_botao("📸 Capturar Foto", salvar_foto)
-btn_zoom_in = criar_botao("🔍 Zoom In", aumentar_zoom)
-btn_zoom_out = criar_botao("🔎 Zoom Out", diminuir_zoom)
-btn_sair = criar_botao("❌ Fechar", fechar_aplicacao)
-
-# Fecha o programa ao clicar no botão de fechar da janela
-root.protocol("WM_DELETE_WINDOW", fechar_aplicacao)
-
-# Executando a interface gráfica
-root.mainloop()
+if __name__ == "__main__":
+    main()

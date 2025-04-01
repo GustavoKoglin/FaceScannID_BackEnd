@@ -3,18 +3,19 @@ from mysql.connector import Error
 import os
 from dotenv import load_dotenv
 
+from config import db_config, host, user, password, name, port
+
 # Carregar variáveis do .env
 load_dotenv()
 
 # Configuração melhorada com tratamento para MySQL 8+
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),  # Removida senha padrão
-    "database": os.getenv("DB_NAME", "FSID"),
-    "port": int(os.getenv("DB_PORT", 3306)),
-    "auth_plugin": 'mysql_native_password',  # Essencial para MySQL 8+
-    "raise_on_warnings": True  # Melhora o tratamento de avisos
+    "host": host,
+    "user": user,
+    "password": password,
+    "database": name,
+    "port": port,
+    **db_config  # Desempacota os outros parâmetros de configuração
 }
 
 def conectar_banco():
